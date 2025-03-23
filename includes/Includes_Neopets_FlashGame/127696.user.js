@@ -597,18 +597,20 @@ FlashGame.url = function (obj) {
 						if (ini.test(xhr.response.text)) {
 							var content = RegExp.rightContext.replace(/^\s+|[\t ]+/g, "");
 
-							if (/functiongetiVID\(\)(?::number)?{return\((\d{5,})\);}/i.test(content.replace(/\s+/g, ""))) {
-								include.vid = parseInt(RegExp.$1, 10);
-								var re = /aDecimals\.push\(\[(\d+(?:,\d+)+)\]\);/gi;
+const cleaned = content.replace(/\s+/g, "");
 
-								while (re.exec(content) != null) {
-									decimals.push(RegExp.$1.split(",").map(function ($0) {
-										return parseInt($0, 10);
-									}));
-								}
+const vidMatch = cleaned.match(/functiongetiVID\(\)(?::number)?{return\((\d{4,6})\);}/i);
+if (vidMatch) {
+    include.vid = parseInt(vidMatch[1], 10);
+    console.log("include.Vid =", include.Vid);  // 🔍 DEBUG
 
-								include.Decimals = MD5_hexhash(decimals.toSource().replace(/\s+/g, ""));
-							}
+    const re = /aDecimals\.push\(\[(\d+(?:,\d+)+)\]\);/gi;
+    while ((match = re.exec(content)) !== null) {
+        decimals.push(match[1].split(",").map(n => parseInt(n, 10)));
+    }
+
+    include.Decimals = MD5_hexhash(decimals.toSource().replace(/\s+/g, ""));
+}
 
 							is_error = decimals.length != 20 || decimals[0].length != 83;
 						}
@@ -630,18 +632,13 @@ FlashGame.url = function (obj) {
 							return;
 						}
 
-						if (!is_error && /^(?:13960|89198|97250)$/.test(include.vid)) {
-							FlashGame.includes[obj.include] = include;
-							FlashGame.cached_includes[obj.include] = include;
+						const allowedVids = [13960, 89198, 97250];
 
-							GM_setValue("includes", JSON.stringify(FlashGame.cached_includes));
-
-							if (!(include.Decimals in decimals_arr)) {
-								decimals_arr[include.Decimals] = decimals;
-
-								GM_setValue("decimals", JSON.stringify(decimals_arr));
-							}
-						} else {
+// If it’s a new/unknown Vid, allow it with a warning
+if (!is_error && include.Vid) {
+    if (!allowedVids.includes(include.Vid)) {
+        console.warn("⚠️ Unrecognized include.Vid =", include.Vid, "- Proceeding anyway.");
+    } else {
 							obj.onerror({
 								code	: 0xA004,
 								message	: "Wrong parameter 'include.vid'",
