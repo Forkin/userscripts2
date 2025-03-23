@@ -9,11 +9,11 @@
 // @homepage       http://gm.wesley.eti.br
 // @version        3.0.3
 // @language       en
-// @include        http://www.neopets.com/games/*#gmc
-// @include        http://www.neopets.com/games/game.phtml?game_id=*
-// @include        http://www.neopets.com/altador/colosseum/ctp.phtml
-// @include        http://www.neopets.com/altador/colosseum/ctp.phtml?game_id=*
-// @icon           http://gm.wesley.eti.br/icon.php?desc=127882
+// @include        https://www.neopets.com/games/*#gmc
+// @include        https://www.neopets.com/games/game.phtml?game_id=*
+// @include        https://www.neopets.com/altador/colosseum/ctp.phtml
+// @include        https://www.neopets.com/altador/colosseum/ctp.phtml?game_id=*
+// @icon           https://gm.wesley.eti.br/icon.php?desc=127882
 // @connect        neopets.com
 // @connect        github.com
 // @connect        raw.githubusercontent.com
