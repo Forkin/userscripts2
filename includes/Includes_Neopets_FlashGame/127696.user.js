@@ -496,7 +496,7 @@ FlashGame.url = function (obj) {
 					"sk_g" : obj.options.sk,
 					"usrnm_g" : obj.username,
 					"dc_g" : obj.options.dc || 0,
-					"cmgd_g" : i.Vid || "",
+					"cmgd_g" : ivid || "",
 					"ddNcChallenge" : obj.options.ddNcChallenge || 0,
 					"fs_g" : (obj.options.forceScore != undefined ? obj.options.forceScore || "" : idv.fs_g)
 				};
@@ -588,7 +588,7 @@ FlashGame.url = function (obj) {
 						include = {
 							"LastUpdate"	: new Date().toString(),
 							"Decimals"		: "",
-							"Vid"			: null
+							"vid"			: null
 						},
 						is_error = true,
 						decimals = [],
@@ -598,7 +598,7 @@ FlashGame.url = function (obj) {
 							var content = RegExp.rightContext.replace(/^\s+|[\t ]+/g, "");
 
 							if (/functiongetiVID\(\)(?::number)?{return\((\d{5,})\);}/i.test(content.replace(/\s+/g, ""))) {
-								include.Vid = parseInt(RegExp.$1, 10);
+								include.vid = parseInt(RegExp.$1, 10);
 								var re = /aDecimals\.push\(\[(\d+(?:,\d+)+)\]\);/gi;
 
 								while (re.exec(content) != null) {
@@ -630,7 +630,7 @@ FlashGame.url = function (obj) {
 							return;
 						}
 
-						if (!is_error && /^(?:13960|89198|97250)$/.test(include.Vid)) {
+						if (!is_error && /^(?:13960|89198|97250)$/.test(include.vid)) {
 							FlashGame.includes[obj.include] = include;
 							FlashGame.cached_includes[obj.include] = include;
 
@@ -644,7 +644,7 @@ FlashGame.url = function (obj) {
 						} else {
 							obj.onerror({
 								code	: 0xA004,
-								message	: "Wrong parameter 'include.Vid'",
+								message	: "Wrong parameter 'include.vid'",
 								data	: obj,
 							});
 							return;
