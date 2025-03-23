@@ -1,13 +1,13 @@
 // ==UserScript==
-// @name           Neopets : Avatars Flash Games [BETA]
-// @namespace      http://gm.wesley.eti.br
-// @description    Displays Avatars Flash Games and lets us to send score automatically
+// @name           Neopets : Avatars Flash Games [BETA] (Fixed)
+// @namespace      https://gm.wesley.eti.br
+// @description    Displays Avatars Flash Games and lets us to send score automatically (Fixed include.vid parameter error)
 // @author         w35l3y
 // @email          w35l3y@brasnet.org
-// @copyright      2012+, w35l3y (http://gm.wesley.eti.br)
+// @copyright      2012+, w35l3y
 // @license        GNU GPL
 // @homepage       http://gm.wesley.eti.br
-// @version        3.0.3
+// @version        3.0.3.1
 // @language       en
 // @include        https://www.neopets.com/games/*#gmc
 // @include        https://www.neopets.com/games/game.phtml?game_id=*
@@ -24,26 +24,26 @@
 // @grant          GM_xmlhttpRequest
 // @grant          GM_getResourceText
 // @resource       meta https://github.com/w35l3y/userscripts/raw/master/scripts/Neopets_Avatars_Flash_Games_%5BBETA%5D/127882.user.js
-// @resource       i18n ../../includes/Includes_I18n/resources/default.json
-// @resource       updaterWindowHtml ../../includes/Includes_Updater/resources/default.html
-// @resource       updaterWindowCss ../../includes/Includes_Updater/resources/default.css
-// @resource       css_colorbox http://www.neopets.com/games/css/colorbox.css?v=1
+// @resource       i18n https://github.com/Forkin/userscripts2/raw/master/includes/Includes_I18n/resources/default.json
+// @resource       updaterWindowHtml https://github.com/Forkin/userscripts2/raw/refs/heads/master/includes/Includes_Updater/resources/default.html
+// @resource       updaterWindowCss https://github.com/Forkin/userscripts2/raw/refs/heads/master/includes/Includes_Updater/resources/default.css
+// @resource       css_colorbox https://www.neopets.com/games/css/colorbox.css?v=1
 // @resource       avatarPopupHtml resources/default.html
 // @resource       avatarPopupCss resources/default.css
 // @resource       avatarPopup2Css resources/default1.css
 // @resource       gamesSettingsCss resources/default2.css
-// @resource       css_gamesroom http://www.neopets.com/games/css/gamesroom_redux.css?v=2
+// @resource       css_gamesroom https://www.neopets.com/games/css/gamesroom_redux.css?v=2
 // @require        https://gist.githubusercontent.com/Forkin/b7eb0d84f583e16de0f8b9e2cbd702d6/raw/8f170bbc26f96b75d0a0f09c8fffb7245dbe101c/md5.txt
-// @require        ../../includes/Includes_XPath/63808.user.js
-// @require        ../../includes/Includes_HttpRequest/56489.user.js
-// @require        ../../includes/Includes_ShowMyCode/69584.user.js
-// @require        ../../includes/Includes_Translate/85618.user.js
-// @require        ../../includes/Includes_I18n/87940.user.js
-// @require        ../../includes/Includes_Updater/87942.user.js
-// @require        ../../includes/Includes_Timer/85450.user.js
-// @require        ../../includes/Includes_Neopets_FlashGame/127696.user.js
-// @require        http://images.neopets.com/js/jquery-1.7.1.min.js?v=1
-// @require        http://images.neopets.com/js/jquery.colorbox.min.js?v=1
+// @require        https://github.com/Forkin/userscripts2/raw/refs/heads/master/includes/Includes_XPath/63808.user.js
+// @require        https://github.com/Forkin/userscripts2/raw/refs/heads/master/includes/Includes_HttpRequest/56489.user.js
+// @require        https://github.com/Forkin/userscripts2/raw/refs/heads/master/includes/Includes_ShowMyCode/69584.user.js
+// @require        https://github.com/Forkin/userscripts2/raw/refs/heads/master/includes/Includes_Translate/85618.user.js
+// @require        https://github.com/Forkin/userscripts2/raw/refs/heads/master/includes/Includes_I18n/87940.user.js
+// @require        https://github.com/Forkin/userscripts2/raw/refs/heads/master/includes/Includes_Updater/87942.user.js
+// @require        https://github.com/Forkin/userscripts2/raw/refs/heads/master/includes/Includes_Timer/85450.user.js
+// @require        https://github.com/Forkin/userscripts2/raw/refs/heads/master/includes/Includes_Neopets_FlashGame/127696.user.js
+// @require        https://images.neopets.com/js/jquery-1.7.1.min.js?v=1
+// @require        https://images.neopets.com/js/jquery.colorbox.min.js?v=1
 // @history        3.0.0 Fixed some bugs
 // @history        2.0.0.0 Updated @require#87942
 // @history        1.0.2.1 Added game #1347
@@ -71,19 +71,37 @@
 
 **************************************************************************/
 
-//GM_setValue("call_url", false);
-//GM_setValue("stored", false);
-//GM_setValue("mod_change", 1);
-//GM_setValue("beep", false);
-//GM_setValue("generic", true);
-//GM_setValue("sp", 5);
-
 GM_addStyle(GM_getResourceText("css_gamesroom"));
 GM_addStyle(GM_getResourceText("gamesSettingsCss"));
 GM_addStyle(GM_getResourceText("css_colorbox"));
 GM_addStyle(GM_getResourceText("avatarPopupCss"));
 
-function init (doc) {	// script scope
+// Updated efn function to filter out "include.vid" parameter
+function efn(v) {
+    if (v instanceof Function) {
+        return v;
+    } else {
+        return function(score) {
+            var result = {};
+            // Split the parameter string on '&' and then each pair on '='
+            v.split("&").forEach(function(pair) {
+                var parts = pair.split("=");
+                if (parts.length === 2) {
+                    var key = parts[0],
+                        value = parts[1];
+                    // Skip any parameter with key "include.vid"
+                    if (key.toLowerCase() === "include.vid") {
+                        return;
+                    }
+                    result[key] = value;
+                }
+            });
+            return result;
+        };
+    }
+}
+
+function init(doc) {	// script scope
 	//alert(doc.toSource());
 
 	var games = {
@@ -154,6 +172,9 @@ function init (doc) {	// script scope
 					er = /(?:^|&)(\w+)=([^&]+)/g;
 
 					while (er.exec(v)) {
+						if (RegExp.$1 === "include.vid") {
+							continue;
+						}
 						result[RegExp.$1] = RegExp.$2;
 					}
 
@@ -187,7 +208,7 @@ function init (doc) {	// script scope
 			$("#label_game").text(name);
 
 			var avatar = $("#image_avatar");
-			avatar.attr("src", "http://images.neopets.com/neoboards/avatars/" + (data[4] || "default.gif"));
+			avatar.attr("src", "https://images.neopets.com/neoboards/avatars/" + (data[4] || "default.gif"));
 			avatar.attr("title", name);
 			
 			$("#button_rand").click();
@@ -257,13 +278,13 @@ function init (doc) {	// script scope
 					span.setAttribute("id", "ctp-message");
 					btn2.parentNode.insertBefore(span, btn2.nextElementSibling);
 					btn.parentNode.parentNode.parentNode.appendChild(td);
-					table.rows[0].innerHTML = '<th style="width:75px" class="confirmation-2">Score</th><td style="width:91px" class="confirmation-2"><input name="score" type="text" id="field_score"  value="' + score_time[0] + '" /></td><td rowspan="2" width="50" height="50" class="confirmation-2"><img id="image_avatar" src="http://images.neopets.com/neoboards/avatars/' + (data[4] || "default.gif") + '" title="' + (data[5] || doc.name || "") + '" /></td><td rowspan="6" class="confirmation confirmation-2" style="width:5px">&nbsp;</td><th colspan="2" class="confirmation" id="label_score">' + score + '</th>';
+					table.rows[0].innerHTML = '<th style="width:75px" class="confirmation-2">Score</th><td style="width:91px" class="confirmation-2"><input name="score" type="text" id="field_score"  value="' + score_time[0] + '" /></td><td rowspan="2" width="50" height="50" class="confirmation-2"><img id="image_avatar" src="https://images.neopets.com/neoboards/avatars/' + (data[4] || "default.gif") + '" title="' + (data[5] || doc.name || "") + '" /></td><td rowspan="6" class="confirmation confirmation-2" style="width:5px">&nbsp;</td><th colspan="2" class="confirmation" id="label_score">' + score + '</th>';
 					table.rows[1].innerHTML = '<th class="confirmation-2">Time (ms)</th><td class="confirmation-2"><input type="text" name="time" id="field_time" value="' + score_time[1] + '" /></td><th colspan="2" class="confirmation" id="label_time"><span class="red">00:00</span></th>';
 
 					var groups = [{
 						name:"captcha",
 						list:[
-							'<th class="confirmation-2"><img src="http://www.showmycode.com/?c" id="image_captcha" /></th><td colspan="2" class="confirmation-2"><input id="field_captcha" name="captcha" maxlength="1" /></td><th class="confirmation">Params</th><td class="confirmation aleft" id="label_opts"><span class="red">0|0|0|||</span></td>',
+							'<th class="confirmation-2"><img src="https://web.archive.org/web/20151107015031if_/http://www.showmycode.com/?c#r0.5561684707507499" id="image_captcha" /></th><td colspan="2" class="confirmation-2"><input id="field_captcha" name="captcha" maxlength="1" /></td><th class="confirmation">Params</th><td class="confirmation aleft" id="label_opts"><span class="red">0|0|0|||</span></td>',
 							'<th colspan="3" class="acenter confirmation-2">Captcha</th><th class="confirmation">Username&nbsp;</th><td class="confirmation aleft" id="label_username">' + usern + '</td>',
 						],
 					},];
@@ -368,7 +389,7 @@ function init (doc) {	// script scope
 					}
 				});
 				$("#image_captcha").click(function (e) {
-					$(this).attr("src", "http://www.showmycode.com/?c#r" + Math.random());
+					$(this).attr("src", "https://web.archive.org/web/20151107015031if_/http://www.showmycode.com/?c#r0.5561684707507499");
 					$("#field_captcha").focus();
 				});
 				$("#field_score").change(function (e) {
@@ -601,7 +622,7 @@ function init (doc) {	// script scope
 								[
 									["score"],
 									["time"],
-									["game", obj.name + ' (<a target="_blank" href="http://www.neopets.com/games/game.phtml?game_id=' + obj.params.game + '">' + obj.params.game + '</a>)'],
+									["game", obj.name + ' (<a target="_blank" href="https://www.neopets.com/games/game.phtml?game_id=' + obj.params.game + '">' + obj.params.game + '</a>)'],
 									["username"],
 									["opts"],
 									["extra"],
@@ -609,7 +630,7 @@ function init (doc) {	// script scope
 									$("#label_" + v[0]).html('<span class="' + (test[2 + i]?"":"red") + '">' + (v[1]?v[1]:obj.params[v[0]]) + '</span>');
 								});
 								
-								$("#image_avatar").attr("src", "http://images.neopets.com/neoboards/avatars/" + (data[4] || "default.gif")).attr("title", (data[5] || obj.name || ""));
+								$("#image_avatar").attr("src", "https://images.neopets.com/neoboards/avatars/" + (data[4] || "default.gif")).attr("title", (data[5] || obj.name || ""));
 
 								if (!test[1]) {
 									$("#ctp-avatar-save-2").hide();
