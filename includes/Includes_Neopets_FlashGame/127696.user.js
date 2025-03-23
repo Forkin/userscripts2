@@ -18,6 +18,7 @@
 // @grant          GM_deleteValue
 // @grant          GM_xmlhttpRequest
 // @grant          GM_getResourceText
+// @grant          unsafeWindow
 // @resource       i18n ../../includes/Includes_I18n/resources/default.json
 // @require        http://www.onicos.com/staff/iz/amuse/javascript/expert/md5.txt
 // @require        ../../includes/Includes_XPath/63808.user.js
@@ -118,9 +119,9 @@ FlashGame.convert = function (doc, type) {
 							if (value) {
 								console.log(key + " = " + value);
 							}
-							return v;
+							return value;
 						default:
-							return v;
+							return value;
 					}
 				},
 				re1 = /&(\w+)=([^&"]+)/gm,
@@ -338,7 +339,6 @@ FlashGame.url = function (obj) {
 			data	: "options.include_movie"
 		};
 	} else {
-		//console.log(obj);
 		var test_value = function (v) {
 			switch (v) {
 				case "game":
@@ -470,7 +470,6 @@ FlashGame.url = function (obj) {
 					"gmd_g" : obj.game,
 					"mltpl_g" : obj.options.multiple || 0,
 					"gmdt_g" : (function (c, x) {
-	//					var rnd = Math.floor(c.length * Math.random()),	// np8_gs_v16 and older
 						var rnd = Math.floor(10 * Math.random()),
 						bin = x.ssnhsh + x.ssnky,
 						bl = bin.length,
@@ -496,7 +495,7 @@ FlashGame.url = function (obj) {
 					"sk_g" : obj.options.sk,
 					"usrnm_g" : obj.username,
 					"dc_g" : obj.options.dc || 0,
-					"cmgd_g" : ivid || "",
+					"cmgd_g" : i.Vid || "",
 					"ddNcChallenge" : obj.options.ddNcChallenge || 0,
 					"fs_g" : (obj.options.forceScore != undefined ? obj.options.forceScore || "" : idv.fs_g)
 				};
@@ -511,9 +510,6 @@ FlashGame.url = function (obj) {
 						o += "&" + p + "=" + encodeURI(x);
 					}
 				}
-
-				//console.log(o.substr(1));
-				//console.log(FlashGame.test(o.substr(1), decimals_arr[i.Decimals]));
 
 				obj.url = "http://www.neopets.com/high_scores/process_flash_score.phtml?" + o.substr(1);
 
@@ -588,7 +584,7 @@ FlashGame.url = function (obj) {
 						include = {
 							"LastUpdate"	: new Date().toString(),
 							"Decimals"		: "",
-							"vid"			: null
+							"Vid"			: null
 						},
 						is_error = true,
 						decimals = [],
@@ -596,29 +592,28 @@ FlashGame.url = function (obj) {
 						
 						if (ini.test(xhr.response.text)) {
 							var content = RegExp.rightContext.replace(/^\s+|[\t ]+/g, "");
-
-const cleaned = content.replace(/\s+/g, "");
-
-const vidMatch = cleaned.match(/functiongetiVID\(\)(?::number)?{return\((\d{4,6})\);}/i);
-if (vidMatch) {
-    include.vid = parseInt(vidMatch[1], 10);
-    console.log("include.Vid =", include.Vid);  // 🔍 DEBUG
-
-    const re = /aDecimals\.push\(\[(\d+(?:,\d+)+)\]\);/gi;
-    while ((match = re.exec(content)) !== null) {
-        decimals.push(match[1].split(",").map(n => parseInt(n, 10)));
-    }
-
-    include.Decimals = MD5_hexhash(decimals.toSource().replace(/\s+/g, ""));
-}
-
+              // --- Updated extraction block ---
+							const cleaned = content.replace(/\s+/g, "");
+							const vidMatch = cleaned.match(/functiongetiVID\(\)(?::number)?{return\((\d{4,6})\);}/i);
+							if (vidMatch) {
+								include.Vid = parseInt(vidMatch[1], 10);
+								console.log("include.Vid =", include.Vid);
+								const re = /aDecimals\.push\(\[(\d+(?:,\d+)+)\]\);/gi;
+								let match;
+								while ((match = re.exec(content)) !== null) {
+									decimals.push(match[1].split(",").map(function(n) {
+										return parseInt(n, 10);
+									}));
+								}
+								include.Decimals = MD5_hexhash(decimals.toSource().replace(/\s+/g, ""));
+							}
+              // --- End Updated extraction block ---
 							is_error = decimals.length != 20 || decimals[0].length != 83;
 						}
-
+						
 						if (is_error && obj.cache && obj.include in FlashGame.cached_includes) {
 							include = FlashGame.cached_includes[obj.include];
 							decimals = decimals_arr[include.Decimals] || [];
-
 							is_error = decimals.length != 20 || decimals[0].length != 83;
 						} else if (xhr.error) {
 							var err = function (n) {
@@ -631,22 +626,33 @@ if (vidMatch) {
 							});
 							return;
 						}
-
-						const allowedVids = [13960, 89198, 97250];
-
-// If it’s a new/unknown Vid, allow it with a warning
-if (!is_error && include.Vid) {
-    if (!allowedVids.includes(include.Vid)) {
-        console.warn("⚠️ Unrecognized include.Vid =", include.Vid, "- Proceeding anyway.");
-    } else {
+						
+						// --- Allowed Vid check ---
+						const allowedVids = [13960, 89198, 97250]; // add any new allowed Vid values here
+						if (!is_error && (allowedVids.includes(include.Vid) || true)) {
+							if (!allowedVids.includes(include.Vid)) {
+								console.warn("⚠️ Unrecognized include.Vid =", include.Vid, "- Proceeding anyway.");
+							}
+							FlashGame.includes[obj.include] = include;
+							FlashGame.cached_includes[obj.include] = include;
+							
+							GM_setValue("includes", JSON.stringify(FlashGame.cached_includes));
+							
+							if (!(include.Decimals in decimals_arr)) {
+								decimals_arr[include.Decimals] = decimals;
+								
+								GM_setValue("decimals", JSON.stringify(decimals_arr));
+							}
+						} else {
 							obj.onerror({
 								code	: 0xA004,
-								message	: "Wrong parameter 'include.vid'",
+								message	: "Wrong parameter 'include.Vid'",
 								data	: obj,
 							});
 							return;
 						}
-
+						// --- End Allowed Vid check ---
+						
 						obj.movie = include;
 						next(obj);
 					}
@@ -692,7 +698,6 @@ FlashGame.send = function (obj) {
 			"Referer" : obj.referer
 		},
 		"onsuccess"	: function (xhr) {
-			//console.log(xhr.response.text);
 			var result = FlashGame.convert(xhr.response.text, "process_flash_score") || {},
 			key = "plays-" + obj.options.username,
 			plays = JSON.parse(GM_getValue(key, '{"last":0,"games":{}}'));
@@ -744,7 +749,7 @@ FlashGame.send = function (obj) {
 				"Too slow",
 				"DD SUCCESS",
 				"DD NO SUCCESS",
-				I18n.get("npafg.msg.reached_max"), //	"IDS_SM_DD_MAX",
+				I18n.get("npafg.msg.reached_max"),
 				"IDS_SM_DD_BEAT_AAA",
 				"IDS_SM_DD_BEAT_ABIGAIL",
 				"IDS_SM_DD_BEAT_DOUBLE",
@@ -764,7 +769,6 @@ FlashGame.send = function (obj) {
 			}
 
 			if (result.list && result.list.call_url) {
-				// example : http://www.neopets.com/games/display_avatar.phtml?id=130
 				var url = result.list.call_url;
 				if (!/^http/.test(url)) {
 					if ("/" != url[0]) {
@@ -816,12 +820,11 @@ FlashGame.send = function (obj) {
 			if (obj.onsuccess(obj)) {
 				window.setTimeout(obj.recursive, (function () {
 					var x = JSON.parse(GM_getValue("rnd_time", "[2000, 1000]"));
-
 					return Math.floor(x[0] + x[1] * Math.random());
 				}()), obj);
 			}
 		}
-	}).send({"onData" : "{}"}); // "{}"|"[type Function]"
+	}).send({"onData" : "{}"});
 };
 
 FlashGame.execute = function (obj) {
@@ -907,7 +910,6 @@ FlashGame.execute = function (obj) {
 			} else {
 				obj.onsuccess = function (obj) {
 					alert(obj.message);
-
 					return true;
 				};
 			}
