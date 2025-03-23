@@ -33,7 +33,7 @@
 // @resource       avatarPopup2Css resources/default1.css
 // @resource       gamesSettingsCss resources/default2.css
 // @resource       css_gamesroom http://www.neopets.com/games/css/gamesroom_redux.css?v=2
-// @require        http://www.onicos.com/staff/iz/amuse/javascript/expert/md5.txt
+// @require        https://gist.githubusercontent.com/Forkin/b7eb0d84f583e16de0f8b9e2cbd702d6/raw/8f170bbc26f96b75d0a0f09c8fffb7245dbe101c/md5.txt
 // @require        ../../includes/Includes_XPath/63808.user.js
 // @require        ../../includes/Includes_HttpRequest/56489.user.js
 // @require        ../../includes/Includes_ShowMyCode/69584.user.js
