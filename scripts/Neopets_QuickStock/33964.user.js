@@ -25,7 +25,7 @@
 // @require        ../../includes/Includes_XPath/63808.user.js
 // @require        ../../includes/Includes_HttpRequest/56489.user.js
 // @require        ../../includes/Includes_WinConfig/163374.user.js
-// @require        ../../includes/Includes_Neopets_[BETA]/main.user.js
+// @require        https://github.com/Forkin/userscripts2/raw/refs/heads/master/includes/Includes_Neopets_%5BBETA%5D/main.user.js
 // @require        ../../includes/Includes_Neopets_QuickStock/main.user.js
 // @require        ../../includes/Includes_Neopets_Inventory/main.user.js
 // ==/UserScript==
